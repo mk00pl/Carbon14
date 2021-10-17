@@ -96,10 +96,23 @@ class Analysis(object):
         self.start = datetime.now(tz=pytz.utc)
         log('Fetching page {}'.format(self.url))
         try:
-            self.request = self.session.get(self.url)
-        except:
-            error('Error fetching page!')
-            return
+            if self.url[0:8] == "https://":
+                self.request = self.session.get(self.url)
+            elif self.url[0:7] == "http://":
+                self.url.replace("http://","https://")
+                self.request = self.session.get(self.url)
+            else:
+                self.url = "https://" + self.url
+                self.request = self.session.get(self.url)
+        except requests.exceptions.SSLError:
+            try:
+                self.url.replace("https://","http://")
+                self.request = self.session.get(self.url)
+            except:
+                error('Error fetching page!')
+                return
+        #assuming that page has valid ssl certificate
+        #repeating the requests without ssl if not
 
         html = etree.HTML(self.request.text)
 
